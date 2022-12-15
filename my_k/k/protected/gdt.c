@@ -1,4 +1,5 @@
-#include "gdt.h"
+#include <k/gdt.h>
+#include <stdio.h>
 
 static struct gdt_entry gdt[6];
 
@@ -13,32 +14,32 @@ void print_gdt_entry(size_t index)
     printf("BASE_3: %x\r\n\r\n", gdt[index].base_3);
 }
 
-struct gdt_entry create_gdt_entry(size_t i, u32 base, u32 limit, u8 access,
-                                  u8 flags)
+void create_gdt_entry(size_t i, u32 base, u32 limit, u8 access, u8 flags)
 {
     gdt[i].base_1 = (u16)base;
     gdt[i].base_2 = (u8)(base >> 16);
     gdt[i].base_3 = (u8)(base >> 24);
     gdt[i].limit = (u16)limit;
     gdt[i].access = access;
-    gdt[i].limit_flags = ((limit >> 16) & x0F) | (flags & 0xF0);
+    gdt[i].limit_flags = ((limit >> 16) & 0x0F) | (flags & 0xF0);
 }
 
 // setting up segments as specified in the osDev wiki
+// and going to protected mode
 void gdt_init(void)
 {
     // NULL entry
-    set_gdt_entry(0, 0, 0, 0);
+    create_gdt_entry(0, 0, 0, 0, 0);
     // kernel mode code segment
-    set_gdt_entry(1, 0, 0xFFFFF, 0x9A, 0xC);
+    create_gdt_entry(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);
     // kernel mode data segement
-    set_gdt_entry(2, 0, 0xFFFFF, 0x92, 0xC);
+    create_gdt_entry(2, 0, 0xFFFFFFFF, 0x92, 0xCF);
     // user mode code segment
-    set_gdt_entry(3, 0, 0xFFFFF, 0xFA, 0xC);
+    create_gdt_entry(3, 0, 0, 0, 0);
     // user mode data segement
-    set_gdt_entry(4, 0, 0xFFFFF, 0xF2, 0xC);
+    create_gdt_entry(4, 0, 0, 0, 0);
     // Task state segment (TSS)
-    set_gdt_entry(5, 0, 0, 0, 0);
+    create_gdt_entry(5, 0, 0, 0, 0);
 
     // printing all the gdt entries
     size_t i = 0;
@@ -58,5 +59,17 @@ void gdt_init(void)
     // Enable PE
     __asm__ __volatile__("movl %cr0, %eax");
     __asm__ __volatile__("or $1, %al");
-    __asm__ __volatile
+    __asm__ __volatile__("movl %eax, %cr0");
+
+    // Segments
+    __asm__ __volatile__("movw $0x10, %ax");
+    __asm__ __volatile__("movw %ax, %ds");
+    __asm__ __volatile__("movw %ax, %es");
+    __asm__ __volatile__("movw %ax, %fs");
+    __asm__ __volatile__("movw %ax, %gs");
+    __asm__ __volatile__("movw %ax, %ss");
+
+    // Switch
+    __asm__ __volatile__("ljmp $0x08, $1f");
+    __asm__ __volatile__("1:");
 }

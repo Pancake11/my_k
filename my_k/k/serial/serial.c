@@ -16,8 +16,8 @@
  *
  * =====================================================================================
  */
-#include <k/serial.h>
 #include <k/kstd.h>
+#include <k/serial.h>
 
 #include "../io.h"
 
@@ -43,9 +43,6 @@ int write(char *buf, size_t count)
         write_char(buf[i]);
     }
 
-    // EOL
-        write_char('\r');
-        write_char('\n');
     return 0;
 }
 
@@ -54,19 +51,13 @@ int write(char *buf, size_t count)
 int init_comm1(void)
 {
     // setting up the bps, fifo and other misc things
-    outb(COMM1 + 1, 0x00);
+    outb(COMM1 + 1, 0x02);
     outb(COMM1 + 3, 0x80);
     outb(COMM1 + 0, 0x03);
     outb(COMM1 + 1, 0x00);
     outb(COMM1 + 3, 0x03);
     outb(COMM1 + 2, 0xC7);
     outb(COMM1 + 4, 0x0B);
-    outb(COMM1 + 4, 0x1E);
-    outb(COMM1 + 0, 0xAE);
-
-    // check if serial is faulty
-    if (inb(COMM1 + 0) != 0xAE)
-        return 1;
 
     // if serial is not faulty set evrything back
     outb(COMM1 + 4, 0x0F);

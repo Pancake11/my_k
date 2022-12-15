@@ -1,6 +1,6 @@
 #
 # Copyright (c) LSE
-# All rights reserved.
+# ALL rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -31,6 +31,15 @@ OBJS	= \
 	  list.o \
 	  memory.o \
 	  serial/serial.o \
+	  protected/gdt.o \
+	  events/idt.o \
+	  events/irq.o \
+	  events/isr.o \
+	  events/irq_asm.o \
+	  events/isr_asm.o \
+	  keyboard/keyboard.o \
+	  timer/timer.o \
+	  syscalls/syscalls.o \
 
 DEPS = $(OBJS:.o=.d)
 

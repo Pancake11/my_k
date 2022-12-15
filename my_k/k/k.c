@@ -21,8 +21,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <k/gdt.h>
+#include <k/idt.h>
+#include <k/irq.h>
+#include <k/isr.h>
+#include <k/keyboard.h>
 #include <k/kstd.h>
 #include <k/serial.h>
+#include <k/syscalls.h>
+#include <k/timer.h>
 #include <stdio.h>
 
 #include "multiboot.h"
@@ -32,19 +39,46 @@ void k_main(unsigned long magic, multiboot_info_t *info)
     (void)magic;
     (void)info;
 
-    char star[4] = "|/-\\";
-    char *fb = (void *)0xb8000;
+    // char star[4] = "|/-\\";
+    // char *fb = (void *)0xb8000;
 
-    for (unsigned i = 0;;)
-    {
-        *fb = star[i++ % 4];
-    }
-
+    // init of serial port comm1
     init_comm1();
+    printf("Serial initialized\n");
+
+    // init of the gdt and jumping into protected mode
+    gdt_init();
+    printf("GDT initialized\n");
+
+    idt_init();
+    printf("IDT initialized\n");
+
+    irq_init();
+    printf("IRQ initialized\n");
+
+    isr_init();
+    printf("ISR initialized\n");
+
+    keyboard_init();
+    printf("keyboard initialized\n");
+
+    timer_init();
+    printf("Timer initialised\n");
+
+    syscall_init();
+    printf("Syscall initialised\n");
+
+    __asm__ __inline__("mov $1, %%eax" :::);
+    __asm__ __inline__("int $80" :::);
 
     for (;;)
     {
-        printf("hello\n");
-        asm volatile("hlt");
+        char c = getkey();
+        if (c == -1)
+            continue;
+        printf("%c", c);
     }
+
+    for (;;)
+        asm volatile("hlt");
 }
